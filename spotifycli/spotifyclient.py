@@ -8,6 +8,7 @@ CLIENT_ID = os.getenv('CLIENT_ID')
 CLIENT_SECRET = os.getenv('CLIENT_SECRET')
 REDIRECT_URI = os.getenv('REDIRECT_URI')
 
+
 class SpotifyClient:
 
     def __init__(self):
@@ -50,8 +51,16 @@ class SpotifyClient:
         return self.create_playlist(playlist_name)
 
     def add_tracks_to_playlist(self, track_uris, playlist):
-        self.sp.playlist_add_items(playlist['id'], track_uris)
-        print(f"{len(track_uris)} tracks added to {playlist['name']}")
+        chunk_size = 50
+        while track_uris:
+            chunk, track_uris = track_uris[:chunk_size], track_uris[chunk_size:]
+            self.sp.playlist_add_items(playlist['id'], chunk)
+
+    def remove_tracks_from_playlist(self, track_uris, playlist):
+        chunk_size = 50
+        while track_uris:
+            chunk, track_uris = track_uris[:chunk_size], track_uris[chunk_size:]
+            self.sp.playlist_remove_all_occurrences_of_items(playlist['id'], chunk)
 
     def find_track_uris_from_stdin(self):
         """read stdin lines and find tracks"""
@@ -71,19 +80,44 @@ class SpotifyClient:
         response = self.sp.search(query)
         return response['tracks']['items'][0]['uri']
 
-    def create_from_liked(self, playlist):
-        added = 0
+    def get_liked_tracks(self):
+        return self.get_tracks_from_fn(
+            lambda limit, offset: self.sp.current_user_saved_tracks(limit=limit, offset=offset))
+
+    def get_tracks_from_playlist(self, playlist):
+        return self.get_tracks_from_fn(
+            lambda limit, offset: self.sp.playlist_items(playlist_id=playlist['id'], limit=limit, offset=offset))
+
+    @staticmethod
+    def get_tracks_from_fn(fn):
+        tracks = []
         total = 0
         limit = 50
         offset = 0
-        while added == 0 or added < total:
-            track_uris = []
-            response = self.sp.current_user_saved_tracks(limit=limit, offset=offset)
+        while len(tracks) == 0 or len(tracks) < total:
+            response = fn(limit, offset)
             total = response['total']
             for item in response['items']:
-                print(item['track']['name'])
-                track_uris.append(item['track']['uri'])
-
-            self.add_tracks_to_playlist(track_uris, playlist)
+                tracks.append(item['track'])
             offset += limit
-            added += len(track_uris)
+
+        return tracks
+
+    def sync_liked_with_playlist(self, playlist):
+        playlist_tracks = self.get_tracks_from_playlist(playlist)
+        liked_tracks = self.get_liked_tracks()
+
+        print(f"playlist track count: {len(playlist_tracks)}")
+        print(f"liked track count: {len(liked_tracks)}")
+
+        playlist_track_uris = set([track['uri'] for track in playlist_tracks])
+        liked_track_uris = set([track['uri'] for track in liked_tracks])
+
+        uris_to_add = liked_track_uris.difference(playlist_track_uris)
+        uris_to_remove = playlist_track_uris.difference(liked_track_uris)
+
+        print(f"adding {len(uris_to_add)} tracks")
+        self.add_tracks_to_playlist(list(uris_to_add), playlist)
+
+        print(f"removing {len(uris_to_remove)} tracks")
+        self.remove_tracks_from_playlist(list(uris_to_remove), playlist)

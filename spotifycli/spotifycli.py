@@ -33,13 +33,13 @@ class SpotifyCli:
         playlist = self.client.get_or_create_playlist(self.args.playlist)
         self.client.add_tracks_to_playlist(track_uris, playlist)
 
-    def command_createfromliked(self):
-        """Create a playlist from liked songs"""
+    def command_syncwithliked(self):
+        """Sync a playlist with liked songs"""
         if self.args.playlist is None:
             raise 'Playlist name is missing'
 
-        playlist = self.client.recreate_playlist(self.args.playlist)
-        self.client.create_from_liked(playlist)
+        playlist = self.client.get_or_create_playlist(self.args.playlist)
+        self.client.sync_liked_with_playlist(playlist)
 
 
 def main():
