@@ -91,10 +91,10 @@ class SpotifyClient:
     @staticmethod
     def get_tracks_from_fn(fn):
         tracks = []
-        total = 0
+        total = -1
         limit = 50
         offset = 0
-        while len(tracks) == 0 or len(tracks) < total:
+        while total == -1 or len(tracks) < total:
             response = fn(limit, offset)
             total = response['total']
             for item in response['items']:
@@ -104,20 +104,26 @@ class SpotifyClient:
         return tracks
 
     def sync_liked_with_playlist(self, playlist):
-        playlist_tracks = self.get_tracks_from_playlist(playlist)
-        liked_tracks = self.get_liked_tracks()
+        playlist_tracks_by_uri = {track['uri'] : track for track in self.get_tracks_from_playlist(playlist)}
+        liked_tracks_by_uri = {track['uri'] : track for track in self.get_liked_tracks()}
 
-        print(f"playlist track count: {len(playlist_tracks)}")
-        print(f"liked track count: {len(liked_tracks)}")
+        print(f"playlist track count: {len(playlist_tracks_by_uri)}")
+        print(f"liked track count: {len(liked_tracks_by_uri)}")
 
-        playlist_track_uris = set([track['uri'] for track in playlist_tracks])
-        liked_track_uris = set([track['uri'] for track in liked_tracks])
+        playlist_track_uris = set(playlist_tracks_by_uri.keys())
+        liked_track_uris = set(liked_tracks_by_uri.keys())
 
         uris_to_add = liked_track_uris.difference(playlist_track_uris)
         uris_to_remove = playlist_track_uris.difference(liked_track_uris)
 
-        print(f"adding {len(uris_to_add)} tracks")
+        self.log_tracks("adding", liked_tracks_by_uri, uris_to_add)
         self.add_tracks_to_playlist(list(uris_to_add), playlist)
 
-        print(f"removing {len(uris_to_remove)} tracks")
+        self.log_tracks("removing", playlist_tracks_by_uri, uris_to_remove)
         self.remove_tracks_from_playlist(list(uris_to_remove), playlist)
+
+    def log_tracks(self, prefix, tracks_by_uri, uris):
+        print(f"{prefix} {len(uris)} tracks")
+        for uri in uris:
+            track = tracks_by_uri.get(uri)
+            print(f"{prefix} {track['artists'][0]['name']}: {track['name']}")

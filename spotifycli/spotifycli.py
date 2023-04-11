@@ -33,6 +33,14 @@ class SpotifyCli:
         playlist = self.client.get_or_create_playlist(self.args.playlist)
         self.client.add_tracks_to_playlist(track_uris, playlist)
 
+    def command_remove(self):
+        """Remove a playlist"""
+        if self.args.playlist is None:
+            raise 'Playlist name is missing'
+
+        playlist = self.client.fetch_playlist(self.args.playlist)
+        self.client.remove_playlist(playlist)
+
     def command_syncwithliked(self):
         """Sync a playlist with liked songs"""
         if self.args.playlist is None:
