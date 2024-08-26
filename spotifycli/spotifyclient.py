@@ -103,9 +103,23 @@ class SpotifyClient:
 
         return tracks
 
+    def dump_playlist_id(self, playlist_id):
+        done = 0
+        total = -1
+        limit = 50
+        offset = 0
+        while total == -1 or done < total:
+            response = self.sp.playlist_items(playlist_id=playlist_id, limit=limit, offset=offset)
+            total = response['total']
+            for item in response['items']:
+                track = item['track']
+                print(f"{item['added_at']}\t{track['artists'][0]['name']}: {track['name']}")
+                done+=1
+            offset += limit
+
     def sync_liked_with_playlist(self, playlist):
-        playlist_tracks_by_uri = {track['uri'] : track for track in self.get_tracks_from_playlist(playlist)}
-        liked_tracks_by_uri = {track['uri'] : track for track in self.get_liked_tracks()}
+        playlist_tracks_by_uri = {track['uri']: track for track in self.get_tracks_from_playlist(playlist)}
+        liked_tracks_by_uri = {track['uri']: track for track in self.get_liked_tracks()}
 
         print(f"playlist track count: {len(playlist_tracks_by_uri)}")
         print(f"liked track count: {len(liked_tracks_by_uri)}")
@@ -127,3 +141,9 @@ class SpotifyClient:
         for uri in uris:
             track = tracks_by_uri.get(uri)
             print(f"{prefix} {track['artists'][0]['name']}: {track['name']}")
+
+    def find_playlist(self, playlist_name):
+        query = f'q={playlist_name}'
+        response = self.sp.search(query, type="playlist")
+        print(response)
+        return response

@@ -13,6 +13,6 @@ setup(
     package_data={'': ['']},
     include_package_data=True,
     classifiers=[],
-    install_requires=['setuptools']
+    install_requires=['setuptools', 'spotipy']
 )
 

@@ -49,6 +49,13 @@ class SpotifyCli:
         playlist = self.client.get_or_create_playlist(self.args.playlist)
         self.client.sync_liked_with_playlist(playlist)
 
+    def command_dump(self):
+        """Dump playlist contents"""
+        if self.args.playlist is None:
+            raise 'Playlist id is missing'
+
+        print(self.client.dump_playlist_id(self.args.playlist))
+        
 
 def main():
     SpotifyCli()
