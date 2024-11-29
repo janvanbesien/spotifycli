@@ -54,7 +54,8 @@ class SpotifyCli:
         if self.args.playlist is None:
             raise 'Playlist id is missing'
 
-        print(self.client.dump_playlist_id(self.args.playlist))
+        playlist = self.client.fetch_playlist(self.args.playlist)
+        print(self.client.dump_playlist(playlist))
         
 
 def main():

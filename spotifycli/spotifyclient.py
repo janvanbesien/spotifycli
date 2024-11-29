@@ -4,9 +4,9 @@ import sys
 import spotipy as spotipy
 from spotipy import SpotifyOAuth
 
-CLIENT_ID = os.getenv('CLIENT_ID')
-CLIENT_SECRET = os.getenv('CLIENT_SECRET')
-REDIRECT_URI = os.getenv('REDIRECT_URI')
+CLIENT_ID = os.getenv('SPOTIFY_CLIENT_ID')
+CLIENT_SECRET = os.getenv('SPOTIFY_CLIENT_SECRET')
+REDIRECT_URI = os.getenv('SPOTIFY_REDIRECT_URI')
 
 
 class SpotifyClient:
@@ -32,8 +32,8 @@ class SpotifyClient:
     def fetch_playlist(self, playlist_name):
         playlists = self.sp.current_user_playlists()
         for playlist in playlists['items']:
-            if playlist['name'] == playlist_name:
-                print(f"found playlist {playlist_name}")
+            if playlist is not None and playlist['name'] == playlist_name:
+                print(f"found playlist {playlist['name']} with id {playlist['id']}")
                 return playlist
 
     def get_or_create_playlist(self, playlist_name):
@@ -103,13 +103,13 @@ class SpotifyClient:
 
         return tracks
 
-    def dump_playlist_id(self, playlist_id):
+    def dump_playlist(self, playlist):
         done = 0
         total = -1
         limit = 50
         offset = 0
         while total == -1 or done < total:
-            response = self.sp.playlist_items(playlist_id=playlist_id, limit=limit, offset=offset)
+            response = self.sp.playlist_items(playlist_id=playlist['id'], limit=limit, offset=offset)
             total = response['total']
             for item in response['items']:
                 track = item['track']
