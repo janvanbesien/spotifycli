@@ -1,5 +1,6 @@
 import os
 import sys
+import random
 
 import spotipy as spotipy
 from spotipy import SpotifyOAuth
@@ -114,7 +115,7 @@ class SpotifyClient:
             for item in response['items']:
                 track = item['track']
                 print(f"{item['added_at']}\t{track['artists'][0]['name']}: {track['name']}")
-                done+=1
+                done += 1
             offset += limit
 
     def sync_liked_with_playlist(self, playlist):
@@ -147,3 +148,18 @@ class SpotifyClient:
         response = self.sp.search(query, type="playlist")
         print(response)
         return response
+
+    def shuffle_playlist(self, playlist):
+        # Fisher-Yates shuffle
+        total = playlist['tracks']['total']
+        print(f"shuffling {total} tracks")
+        for i in reversed(range(1, total - 1)):
+            # pick an element in x[:i+1] with which to exchange x[i]
+            j = random.randrange(i + 1)
+            print(f"swapping {i} and {j}")
+            # tracki = self.sp.playlist_items(playlist_id=playlist['id'], limit=1, offset=i)['items'][0]['track']
+            # trackj = self.sp.playlist_items(playlist_id=playlist['id'], limit=1, offset=j)['items'][0]['track']
+            # print(f"i: {tracki['artists'][0]['name']}: {tracki['name']}")
+            # print(f"j: {trackj['artists'][0]['name']}: {trackj['name']}")
+            if i != j:
+                self.sp.playlist_reorder_items(playlist['id'], i, j)

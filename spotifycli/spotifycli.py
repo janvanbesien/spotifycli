@@ -56,6 +56,14 @@ class SpotifyCli:
 
         playlist = self.client.fetch_playlist(self.args.playlist)
         print(self.client.dump_playlist(playlist))
+
+    def command_shuffle(self):
+        """Shuffle playlist contents"""
+        if self.args.playlist is None:
+            raise 'Playlist id is missing'
+
+        playlist = self.client.fetch_playlist(self.args.playlist)
+        self.client.shuffle_playlist(playlist)
         
 
 def main():
